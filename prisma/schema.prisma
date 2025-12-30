@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  role      Role
+  resumes   Resume[]
+  createdAt DateTime @default(now())
+}
+
+model Resume {
+  id           String   @id @default(uuid())
+  filename     String
+  atsScore     Int
+  skills       String[]
+  experience   Int
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
+  uploadedById String?
+  createdAt    DateTime @default(now())
+}
+
+enum Role {
+  APPLICANT
+  RECRUITER
+}
