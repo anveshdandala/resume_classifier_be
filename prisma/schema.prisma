@@ -4,12 +4,14 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  role      Role
+  role      Role     @default(APPLICANT)
+  password  String
   resumes   Resume[]
   createdAt DateTime @default(now())
 }
