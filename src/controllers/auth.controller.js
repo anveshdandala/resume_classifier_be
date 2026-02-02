@@ -1,8 +1,7 @@
 import {loginService, registerService} from "../services/auth.service.js";
 export const login = (req, res) => {
     try {
-        const email = "[EMAIL_ADDRESS]";
-        const password = "123456";
+        const { email, password} = req.body;
         const user = loginService(email, password);
         res.user = user;
         res.status(200).json(user);
@@ -12,11 +11,13 @@ export const login = (req, res) => {
     }
 }
 
-export const register = (req, res) => {
+export const register = async (req, res) => {
     try {
-        const email = "[EMAIL_ADDRESS]";
-        const password = "123456";
-        const user = register(email, password);
+        console.log("Register endpoint hit");
+        console.log("Headers:", req.headers['content-type']);
+        const data = req.body;
+        console.log("Body:", data);
+        const user = await registerService(data);
         res.user = user;
         res.status(201).json(user);
     } catch (error) {
