@@ -4,12 +4,13 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  fullName  String?
+  fullname  String?
   role      Role     @default(APPLICANT)
   password  String
   resumes   Resume[]

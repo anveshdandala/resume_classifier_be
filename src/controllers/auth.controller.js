@@ -14,10 +14,12 @@ export const login = (req, res) => {
 export const register = async (req, res) => {
     try {
         console.log("Register endpoint hit");
-        console.log("Headers:", req.headers['content-type']);
         const data = req.body;
-        console.log("Body:", data);
         const user = await registerService(data);
+        if(user === null){
+            res.status(400).json({message: "User already exists"});
+            return;
+        }
         res.user = user;
         res.status(201).json(user);
     } catch (error) {

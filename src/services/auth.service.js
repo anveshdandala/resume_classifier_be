@@ -1,4 +1,5 @@
 import {PrismaClient} from "@prisma/client";
+import bcrypt from "bcrypt";
 const prisma = new PrismaClient();
 const loginService = async ()=>{
     try {
@@ -11,15 +12,14 @@ const registerService = async (data)=>{
     try {
         console.log("register services reached with", data);
         
-        // Remove fullName from destructuring
-        const { email, password } = data; 
-        
+        const {fullname, email, password } = data; 
+        const salt = await bcrypt.genSalt(10);
+        const hashedPass = await bcrypt.hash(password, salt);
         const user = await prisma.user.create({
             data:{
-                // fullName, // <--- REMOVE THIS
+                fullname,
                 email,
-                password,
-                // role will automatically default to 'APPLICANT'
+                password: hashedPass,
             }
         })
         console.log("User created", user);
@@ -27,7 +27,7 @@ const registerService = async (data)=>{
         
     } catch (error) {
         console.log("Error creating user:", error); // Log the specific error
-        throw error;   
+        return null;
     }
 }
 export {loginService, registerService};
