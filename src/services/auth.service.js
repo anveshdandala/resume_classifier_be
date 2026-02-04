@@ -1,11 +1,26 @@
 import {PrismaClient} from "@prisma/client";
 import bcrypt from "bcrypt";
 const prisma = new PrismaClient();
-const loginService = async ()=>{
+const loginService = async (data)=>{
     try {
-        console.log("login services reached")   
+        console.log("login services reached");
+        const {email, password} = data;
+        const user = await prisma.user.findUnique({
+            where:{
+                email,
+            }
+        });
+        if(user === null){
+            return null;
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if(!isPasswordValid){
+            return null;
+        }
+        return user;
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        return null;
     }
 }
 const registerService = async (data)=>{
