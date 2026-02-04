@@ -1,8 +1,13 @@
 import {loginService, registerService} from "../services/auth.service.js";
-export const login = (req, res) => {
+
+export const login = async (req, res) => {
     try {
-        const { email, password} = req.body;
-        const user = loginService(email, password);
+        const data = req.body;
+        const user = await loginService(data);
+        if (user === null) {
+            res.status(400).json({message: "Invalid credentials"});
+            return;
+        }
         res.user = user;
         res.status(200).json(user);
     } catch (error) {
