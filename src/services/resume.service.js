@@ -2,8 +2,9 @@ import prisma from "../lib/prisma.js";
 import { calculateScore } from "./scoring.service.js";
 
 export async function processResume(req) {
-  // mock parsing for now
   const file = req.file;
+  const userId = req.user.id;
+
   const skills = ["JavaScript", "Node.js"];
   const experience = 2;
   const atsScore = calculateScore(skills, experience);
@@ -14,6 +15,11 @@ export async function processResume(req) {
       skills,
       experience,
       atsScore,
+      uploadedBy: {
+        connect: {
+          id: req.user.id,
+        },
+      },
     },
   });
 
