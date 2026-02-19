@@ -7,10 +7,16 @@ import logging
 from pdfminer.high_level import extract_text
 import docx
 import phonenumbers
+import spacy
+
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    print("Spacy not found")
 
 def extract_text_from_pdf(file_path):
     pdf_text = extract_text(file_path)
-    print("pdf text",pdf_text)
+    print("pdfgw text",pdf_text)
     return pdf_text
 
 def extract_text_from_docx(file_path):
@@ -42,12 +48,39 @@ def extract_phone(text):
     return None
 
 def extract_name(text):
-    # Heuristic: The name is often at the very top of the resume
+   # 1. Split text into non-empty lines
     lines = [line.strip() for line in text.split('\n') if line.strip()]
-    if lines:
-        # Assumes the first non-empty line is the name
-        # A bit naive but works for many standard resume templates
-        return lines[0] 
+    
+    # 2. Define patterns to SKIP (Headers, Contact labels)
+    # If a line contains these, it is NOT a name.
+    SKIP_KEYWORDS = {"curriculum", "vitae", "resume", "cv", "bio", "profile", "summary"}
+    
+    for line in lines[:10]: # Only check the first 10 lines
+        line_lower = line.lower()
+        
+        # Check A: Is this line a Header? (e.g., "CURRICULUM VITAE")
+        if any(keyword in line_lower for keyword in SKIP_KEYWORDS):
+            continue # Skip this line, go to next
+            
+        # Check B: Is it contact info? (e.g., "Email: ...")
+        if "@" in line or re.search(r'\d', line): # Names rarely have numbers
+            continue
+
+        # Check C: Is it a Job Title? (Heuristic)
+        # If the line is "Software Engineer", skip it.
+        # This is hard without a list, but usually, the name comes BEFORE the title.
+        # We assume the FIRST valid line we hit is the name.
+        
+        # Check D: Structure Validation
+        # A name usually has 2-4 words. "P Ram" is 2 words. "Anvesh" is 1 (risky but possible).
+        words = line.split()
+        if 1 <= len(words) <= 4:
+            doc = nlp(line)
+            if doc.ents and doc.ents[0].label_ == "ORG":
+                continue
+                
+            return line # Return the first valid candidate
+
     return None
 
 def extract_skills(text):
