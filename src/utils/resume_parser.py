@@ -184,6 +184,8 @@ def main():
             "degree": education,
             "company_names": [], # Placeholder
              # "raw_text": text # start debugging
+             "jdKeywords": [],
+             "minExperienceReq": 0,
         }
 
         logging.info(f"Result: {json.dumps(result)}")

@@ -2,10 +2,11 @@ import prisma from "../lib/prisma.js";
 import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
-import { calculateScore } from "./scoring.service.js";
+import calculateATSscore from "./scoring.service.js";
+import { addAbortListener } from "events";
 
 export async function processResume(req) {
-  return new Promise((resolve, reject) => {
+return new Promise((resolve, reject) => {
     if (!req.file) {
       return reject(new Error("No file uploaded"));
     }
@@ -41,19 +42,21 @@ export async function processResume(req) {
       }
 
       try {
-        const parsed = JSON.parse(dataString);
-        console.log("Resume parsed successfully:", parsed);
+        const parsed_outcomes = JSON.parse(dataString);
+        console.log("Resume parsed successfully:", parsed_outcomes);
 
-        const atsScore = calculateScore(
-          parsed.skills_found || [],
-          parsed.experience || 0,
+        const atsScore = calculateATSscore(
+          parsed_outcomes.skills_found || [],
+          parsed_outcomes.experience || 0,
+          parsed_outcomes.jdKeywords || [],
+          parsed_outcomes.minExperienceReq || 0,
         );
 
         const resume = await prisma.resume.create({
           data: {
             filename: req.file.filename,
-            skills: parsed.skills_found || [],
-            experience: parsed.experience || 0,
+            skills: parsed_outcomes.skills_found || [],
+            experience: parsed_outcomes.experience || 0,
             atsScore,
             uploadedBy: {
               connect: { id: userId },
@@ -67,7 +70,7 @@ export async function processResume(req) {
         fs.unlink(filePath, () => {});
 
         resolve({
-          ...parsed,
+          ...parsed_outcomes,
           ats_score: atsScore,
           resume_id: resume.id,
         });
@@ -75,6 +78,24 @@ export async function processResume(req) {
         fs.unlink(filePath, () => {});
         reject(err);
       }
-    });
+    }); 
   });
 }
+export async function myResumes(userId){
+  
+    try{
+      console.log("userId",userId);
+      const resumes = await prisma.resume.findMany({
+        where:{
+          uploadedById:userId
+        }
+      })
+
+      return resumes;
+    }
+    catch(err){
+      throw err;
+    }
+  }
+
+
