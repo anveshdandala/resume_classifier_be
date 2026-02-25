@@ -20,7 +20,7 @@ const loginService = async (data) => {
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" },
+      { expiresIn: "24h" },
     );
 
     return {
@@ -42,7 +42,7 @@ const registerService = async (data) => {
   try {
     console.log("register services reached with", data);
 
-    const { fullname, email, password } = data;
+    const { fullname, email, password, role } = data;
     const salt = await bcrypt.genSalt(10);
     const hashedPass = await bcrypt.hash(password, salt);
     const user = await prisma.user.create({
@@ -50,6 +50,7 @@ const registerService = async (data) => {
         fullname,
         email,
         password: hashedPass,
+        role,
       },
     });
     console.log("User created", user);
