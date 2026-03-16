@@ -56,7 +56,7 @@ const registerService = async (data) => {
     console.log("User created", user);
     return user;
   } catch (error) {
-    console.log("Error creating user:", error); // Log the specific error
+    console.log("Error creating user:", error);
     return null;
   }
 };

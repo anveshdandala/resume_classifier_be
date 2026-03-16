@@ -39836,3 +39836,15 @@ INFO:root:Starting parser execution
 INFO:root:Result: {"skills_found": ["Machine Learning"], "experience": 0, "name": "(AUTONOMOUS)", "email": null, "degree": null, "company_names": [], "jdKeywords": [], "minExperienceReq": 0}
 INFO:root:Starting parser execution
 INFO:root:Result: {"skills_found": [], "experience": 0, "name": "Practice-V", "email": null, "degree": null, "company_names": [], "jdKeywords": [], "minExperienceReq": 0}
+INFO:root:Starting batch parser execution
+INFO:root:Starting batch parser execution
+INFO:root:Final Batch Result: [{"skills_found": ["React", "Express", "Machine Learning", "JavaScript", "Git", "Java", "SQL", "Node.js", "CSS", "PostgreSQL", "HTML", "Python"], "experience": 0, "name": "Anvesh", "email": "anveshdandala@gmail.com", "degree": null, "company_names": [], "jdKeywords": [], "minExperienceReq": 0}]
+INFO:root:Final Batch Result: [{"skills_found": ["Express"], "experience": 0, "name": "Name Of Department", "email": null, "degree": "Bachelor", "company_names": [], "jdKeywords": [], "minExperienceReq": 0}]
+INFO:root:Starting batch parser execution
+INFO:root:Final Batch Result: [{"skills_found": ["React", "PostgreSQL", "SQL", "Python", "Node.js", "HTML", "Express", "CSS", "JavaScript", "Java", "Git", "Machine Learning"], "experience": 0, "name": "Anvesh", "email": "anveshdandala@gmail.com", "degree": null, "company_names": [], "jdKeywords": [], "minExperienceReq": 0}]
+INFO:root:Starting batch parser execution
+INFO:root:Final Batch Result: [{"skills_found": ["Python", "Node.js", "Git", "React", "SQL", "Express", "HTML", "Machine Learning", "Java", "CSS", "JavaScript", "PostgreSQL"], "experience": 0, "name": "Anvesh", "email": "anveshdandala@gmail.com", "degree": null, "company_names": [], "jdKeywords": [], "minExperienceReq": 0}]
+INFO:root:Starting batch parser execution
+INFO:root:Final Batch Result: [{"skills_found": ["PostgreSQL", "Express", "Java", "Node.js", "SQL", "Git", "CSS", "Machine Learning", "React", "HTML", "Python", "JavaScript"], "experience": 0, "name": "Anvesh", "email": "anveshdandala@gmail.com", "degree": null, "company_names": [], "jdKeywords": [], "minExperienceReq": 0}]
+INFO:root:Starting batch parser execution
+INFO:root:Final Batch Result: [{"skills_found": [], "experience": 0, "name": null, "email": null, "degree": null, "company_names": [], "jdKeywords": [], "minExperienceReq": 0}]

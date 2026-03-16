@@ -1,13 +1,29 @@
-import { processResume, myResumes } from "../services/resume.service.js";
+import { processResume, processResumes, myResumes } from "../services/resume.service.js";
 export async function uploadResume(req, res, next) {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "Resume file required" });
     }
+    
     const result = await processResume(req);
+
     res.status(201).json(result);
   } catch (err) {
     next(err);
+  }
+}
+export async function uploadResumesBatch(req, res, next) {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: "Resumes required" });
+    }
+
+  console.log("Processing batch upload for files:", req.files.length);
+  const result = await processResumes(req);
+
+    res.status(201).json(result);
+  } catch (error) {
+    next(error);
   }
 }
 

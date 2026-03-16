@@ -17,7 +17,7 @@ return new Promise((resolve, reject) => {
 
     console.log("Processing resume:", filePath);
 
-    const scriptPath = path.resolve("src/utils/resume_parser.py");
+    const scriptPath = path.resolve("src/run_parser.py");
 
     const pyprocess = spawn("python", [scriptPath, filePath]);
 
@@ -25,11 +25,12 @@ return new Promise((resolve, reject) => {
     let errorString = "";
 
     pyprocess.stdout.on("data", (data) => {
-      dataString += data.toString();
+          resolve(JSON.parse(data.toString()));
     });
 
     pyprocess.stderr.on("data", (data) => {
       errorString += data.toString();
+      reject(data.toString());
     });
 
     pyprocess.on("close", async (code) => {
@@ -42,9 +43,10 @@ return new Promise((resolve, reject) => {
       }
 
       try {
-        const parsed_outcomes = JSON.parse(dataString);
+        const outcomes = JSON.parse(dataString);
+        const parsed_outcomes = Array.isArray(outcomes) ? outcomes[0] : outcomes;
         console.log("Resume parsed successfully:", parsed_outcomes);
-
+        console.log("parsed_outcomes",parsed_outcomes);   
         const atsScore = calculateATSscore(
           parsed_outcomes.skills_found || [],
           parsed_outcomes.experience || 0,
@@ -81,6 +83,85 @@ return new Promise((resolve, reject) => {
     }); 
   });
 }
+export async function processResumes(req) {
+  return new Promise((resolve, reject) => {
+    if (!req.files || req.files.length === 0) {
+      return reject(new Error("No files uploaded"));
+    }
+
+    const filePaths = req.files.map((file) => file.path);
+    const userId = req.user.id;
+
+    console.log("Processing resumes:", filePaths);
+
+    const scriptPath = path.resolve("src/utils/resume_parser.py");
+    
+    // Make sure your Python script handles sys.argv[1:] as a list of files!
+    const pyprocess = spawn("python", [scriptPath, ...filePaths]);
+    
+    let dataString = "";
+    let errorString = "";
+
+    pyprocess.stdout.on("data", (data) => {
+      dataString += data.toString();
+    });
+
+    pyprocess.stderr.on("data", (data) => {
+      errorString += data.toString();
+    });
+
+    pyprocess.on("close", async (code) => {
+      if (code !== 0) {
+        console.error("PYTHON ERROR:", errorString);
+        filePaths.forEach((filePath) => fs.unlink(filePath, () => {}));
+        return reject(new Error("Resume parsing failed"));
+      }
+
+      try {
+        const parsed_outcomes = JSON.parse(dataString);
+        console.log("Resumes parsed successfully");
+
+        const resumeData = filePaths.map((filePath, index) => {
+          const outcome = parsed_outcomes[index] || { error: "No data from parser", skills_found: [], experience: 0 };
+          
+          const atsScore = calculateATSscore(
+            outcome.skills_found || [],
+            outcome.experience || 0,
+            outcome.jdKeywords || [],
+            outcome.minExperienceReq || 0
+          );
+
+          return {
+            filename: req.files[index].filename,
+            skills: outcome.skills_found || [],
+            experience: outcome.experience || 0,
+            atsScore: atsScore,
+            uploadedById: userId, 
+          };
+        });
+
+        // Execute batch insert
+        const createResult = await prisma.resume.createMany({
+          data: resumeData,
+        });
+
+        filePaths.forEach((filePath) => fs.unlink(filePath, () => {}));
+
+        resolve({
+          success: true, 
+          count: createResult.count,
+          parsedData: parsed_outcomes,
+        });
+        
+      } catch (err) {
+        console.error("Prisma/Parsing Error:", err);
+        filePaths.forEach((filePath) => fs.unlink(filePath, () => {}));
+        reject(err);
+      }
+    });
+  });
+}
+
 export async function myResumes(userId){
   
     try{
