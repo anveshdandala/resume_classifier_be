@@ -10,7 +10,6 @@ import phonenumbers
 
 def extract_text_from_pdf(file_path):
     pdf_text = extract_text(file_path)
-    print("pdf text",pdf_text)
     return pdf_text
 
 def extract_text_from_docx(file_path):
@@ -19,6 +18,11 @@ def extract_text_from_docx(file_path):
     for para in doc.paragraphs:
         full_text.append(para.text)
     return '\n'.join(full_text)
+
+
+def extract_text_from_txt(file_path):
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+        return file.read()
 
 def extract_email(text):
     email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
@@ -128,6 +132,8 @@ def main():
                  text = extract_text_from_docx(file_path)
              else:
                  raise ValueError("Unsupported legacy .doc format, please convert to .docx or .pdf")
+        elif file_extension == '.txt':
+            text = extract_text_from_txt(file_path)
         else:
             raise ValueError(f"Unsupported file type: {file_extension}")
 
@@ -150,7 +156,7 @@ def main():
             "email": email,
             "degree": education,
             "company_names": [], # Placeholder
-             # "raw_text": text # start debugging
+            "raw_text": text,
         }
 
         logging.info(f"Result: {json.dumps(result)}")
