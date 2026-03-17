@@ -2,6 +2,7 @@ import path from "path";
 import { spawn } from "child_process";
 
 const parserScriptPath = path.resolve("src/utils/resume_parser.py");
+const PARSER_TIMEOUT_MS = 20000;
 
 export function parseResumeFile(filePath) {
   return new Promise((resolve, reject) => {
@@ -9,6 +10,10 @@ export function parseResumeFile(filePath) {
 
     let stdout = "";
     let stderr = "";
+    const timeout = setTimeout(() => {
+      parser.kill("SIGTERM");
+      reject(new Error("Resume parser timed out"));
+    }, PARSER_TIMEOUT_MS);
 
     parser.stdout.on("data", (chunk) => {
       stdout += chunk.toString();
@@ -19,21 +24,24 @@ export function parseResumeFile(filePath) {
     });
 
     parser.on("error", (error) => {
+      clearTimeout(timeout);
       reject(new Error(`Resume parser process error: ${error.message}`));
     });
 
     parser.on("close", (code) => {
+      clearTimeout(timeout);
+
       if (code !== 0) {
         return reject(new Error(`Resume parser failed with code ${code}: ${stderr || stdout}`));
       }
 
-      const lines = stdout
+      const rawJson = stdout
         .trim()
         .split("\n")
         .map((line) => line.trim())
-        .filter(Boolean);
+        .filter(Boolean)
+        .at(-1);
 
-      const rawJson = lines[lines.length - 1];
       if (!rawJson) {
         return reject(new Error("Resume parser returned empty output"));
       }
