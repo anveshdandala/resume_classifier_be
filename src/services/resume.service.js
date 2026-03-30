@@ -1,78 +1,61 @@
 import prisma from "../lib/prisma.js";
-import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
-import calculateATSscore from "./scoring.service.js";
-
+import {extractTextFromPDF, extractTextFromDocx} from "../utils/text_extractor.js";
 export async function processResume(req) {
-  return new Promise((resolve, reject) => {
-    if (!req.file) {
-      return reject(new Error("No file uploaded"));
-    }
+  if (!req.file) {
+    throw new Error("No file uploaded");
+  }
 
-    const filePath = req.file.path;
-    const userId = req.user.id;
+  const buffer = req.file.buffer;
+  const file_name = req.file.originalname;
+  const mime = req.file.mimetype;
+  console.log(req.file);
+  const jobDescription = req.body.jobDescription;
+  console.log("jobDescription", jobDescription);
+// {
+//   fieldname: 'resume',
+//   originalname: 'DurgaGanesh_Resume.docx',   
+//   encoding: '7bit',
+//   mimetype: '
+// -officedocument.wordprocessingml.document',    
+//   buffer: <Buffer 50 4b 03 04 14 00 06 00 08 00 00 00 21 00 54 d5 46 b6 99 01 00 00 0c 07 00 00 13 00 08 02 5b 43 6f 6e 74 65 6e 74 5f 54 79 70 65 73 5d 2e 78 6d 6c 20 ... 50398 more bytes>,
+//   size: 50448
+// } 
 
-    console.log("Processing resume:", filePath);
+  let text = "";
 
-    const scriptPath = path.resolve("src/run_parser.py");
-    const pyprocess = spawn("python", [scriptPath, filePath]);
+  // choose extractor based on file type
+  if (mime === "application/pdf") {
+    text = await extractTextFromPDF(buffer);
+  } else if (
+    mime ===
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ) {
+    text = await extractTextFromDocx(buffer);
+  } else {
+    throw new Error("Unsupported file type");
+  }
 
-    let dataString = "";
-    let errorString = "";
-
-    pyprocess.stdout.on("data", (data) => {
-      dataString += data.toString();
+  try {
+    const res = await fetch(`http://localhost:8000/predict`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text }),
     });
 
-    pyprocess.stderr.on("data", (data) => {
-      errorString += data.toString();
-    });
+    console.log("status",res.status);
+    const data = await res.text();
+    console.log("RAW RESPONSE:", data);
+    
+    const parsed = JSON.parse(data);
+    return parsed;
 
-    pyprocess.on("close", async (code) => {
-      if (code !== 0) {
-        console.log("PYTHON ERROR:");
-        console.log(errorString);
-        fs.unlink(filePath, () => {});
-        return reject(new Error("Resume parsing failed"));
-      }
-
-      try {
-        const outcomes = JSON.parse(dataString);
-        const parsed_outcomes = Array.isArray(outcomes) ? outcomes[0] : outcomes;
-
-        const atsScore = calculateATSscore(
-          parsed_outcomes.skills_found || [],
-          parsed_outcomes.experience || 0,
-          parsed_outcomes.jdKeywords || [],
-          parsed_outcomes.minExperienceReq || 0,
-        );
-
-        const resume = await prisma.resume.create({
-          data: {
-            filename: req.file.filename,
-            skills: parsed_outcomes.skills_found || [],
-            experience: parsed_outcomes.experience || 0,
-            atsScore,
-            uploadedBy: {
-              connect: { id: userId },
-            },
-          },
-        });
-
-        fs.unlink(filePath, () => {});
-
-        resolve({
-          ...parsed_outcomes,
-          ats_score: atsScore,
-          resume_id: resume.id,
-        });
-      } catch (err) {
-        fs.unlink(filePath, () => {});
-        reject(err);
-      }
-    });
-  });
+  } catch (err) {
+    throw err;
+  }
 }
 
 export async function processResumes(req) {

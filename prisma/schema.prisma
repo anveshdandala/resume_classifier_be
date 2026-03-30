@@ -28,6 +28,32 @@ model Resume {
   createdAt    DateTime @default(now())
 }
 
+model Job {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  matches     Match[]
+}
+
+model Match {
+  id         String   @id @default(uuid())
+
+  resume     Resume   @relation(fields: [resumeId], references: [id])
+  resumeId   String
+
+  job        Job      @relation(fields: [jobId], references: [id])
+  jobId      String
+
+  score      Float
+  similarity Float
+
+  createdAt  DateTime @default(now())
+}
+
 enum Role {
   APPLICANT
   RECRUITER
