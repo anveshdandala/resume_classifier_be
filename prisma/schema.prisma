@@ -14,17 +14,22 @@ model User {
   role      Role     @default(APPLICANT)
   password  String
   resumes   Resume[]
+  jobs      Job[]
   createdAt DateTime @default(now())
 }
 
 model Resume {
   id           String   @id @default(uuid())
   filename     String
-  atsScore     Int
+  atsScore     Int      @default(0)
+  atsFeedback  String[] @default([])
   skills       String[]
-  experience   Int
+  matchedSkills String[] @default([])
+  experience   Int      @default(0)
+  role         String?               
   uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
   uploadedById String?
+  matches      Match[]
   createdAt    DateTime @default(now())
 }
 
@@ -36,22 +41,23 @@ model Job {
   createdById String?
   createdAt   DateTime @default(now())
 
-  matches     Match[]
+  matches Match[]
 }
 
 model Match {
-  id         String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  resume     Resume   @relation(fields: [resumeId], references: [id])
-  resumeId   String
+  resume   Resume @relation(fields: [resumeId], references: [id])
+  resumeId String
 
-  job        Job      @relation(fields: [jobId], references: [id])
-  jobId      String
+  job   Job    @relation(fields: [jobId], references: [id])
+  jobId String
 
-  score      Float
-  similarity Float
+  score       Float   @default(0)  // match_score (semantic similarity)
+  similarity  Float   @default(0)
+  atsScore    Int     @default(0)  // ← ats score at time of match
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 enum Role {
