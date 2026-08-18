@@ -46,7 +46,6 @@ export async function processResume(req) {
       headers: {
         "Content-Type": "application/json",
       },
-      // Send both text and JD to Python
       body: JSON.stringify({ text: text, jobDescription: jobDescription }),
     });
 
@@ -57,11 +56,10 @@ export async function processResume(req) {
 
     console.log("status", res.status);
 
-    // Use .json() directly instead of .text() + JSON.parse()
     const parsed = await res.json();
     console.log("RAW RESPONSE:", parsed);
 
-    // Remember: FastAPI wraps your return dict inside a "data" property!
+    //FastAPI wraps return dict inside a "data" prop
     const mlResult = parsed.data;
 
     const newResume = await prisma.resume.create({
